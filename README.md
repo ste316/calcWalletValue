@@ -32,9 +32,9 @@
 
 3. Examples
 
-    ![crypto](https://github.com/ste316/calc_wallet_value/blob/main/img/crypto.png)
+    ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto.png)
 
-    ![total](https://github.com/ste316/calc_wallet_value/blob/main/img/total.png)
+    ![total](https://github.com/ste316/calcWalletValue/blob/main/img/total.png)
 
 4. Donate
     * bitcoin: bc1q5fwga56vz79aa0rn9ha5q6xhvyrn2ugvhq57xx
