@@ -1,0 +1,8 @@
+{
+    "currency": "EUR",
+    "api_provider": {
+        "provider": "cg",
+        "cgFetchSymb": true
+    },
+    "path" : "D:\\crypto"
+}

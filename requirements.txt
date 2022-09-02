@@ -1,0 +1,9 @@
+pandas
+pandas_datareader
+matplotlib
+seaborn
+numpy
+argparse
+pycoingecko
+requests
+yfinance
