@@ -4,7 +4,8 @@
     * Fill settings.json with you preference
     * Note: the first time you run the program make sure to fill cgFetchSymb with true
 
-    * CoinGecko api is free and you do NOT need any key, see [limits](https://www.coingecko.com/en/api/pricing)
+    * CoinGecko api is free and you do NOT need any key, see [plan](https://www.coingecko.com/en/api/pricing) and
+    [limits](https://www.coingecko.com/en/api/documentation)
 
 2. Usage:
     * Calculate and see value of your crypto portfolio:
@@ -15,19 +16,19 @@
     
     * See value of your crypto portfolio in a spefic date:
         * main.py --calc --crypto --loadJson
-        * NOTE: this function load all data, including price/value, from walletValue.json
+        * NOTE: this function load data from walletValue.json
     
     * See value of your total portfolio in a spefic date:
         * main.py --calc --total --loadJson
-        * NOTE: this function load all data, including price/value, from walletGeneralOverview.json
+        * NOTE: this function load data from walletGeneralOverview.json
     
     * See your crypto portfolio's value over time:
         * main.py --report --crypto
-        * NOTE: this function load all data, including price/value, from walletValue.json
+        * NOTE: this function load data from walletValue.json
 
     * See your crypto portfolio's value over time:
         * main.py --report --total
-        * NOTE: this function load all data, including price/value, from walletGeneralOverview.json
+        * NOTE: this function load data from walletGeneralOverview.json
 
 3. Examples
 
