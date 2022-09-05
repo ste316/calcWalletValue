@@ -4,7 +4,7 @@
     * Fill settings.json with you preference
     * Note: the first time you run the program make sure to fill cgFetchSymb with true
 
-    * CoinGecko api is free and you do NOT need any key, see [plan](https://www.coingecko.com/en/api/pricing) and
+    * CoinGecko api is free and you do NOT need any key, see [plans](https://www.coingecko.com/en/api/pricing) and
     [limits](https://www.coingecko.com/en/api/documentation)
 
 2. Usage:
