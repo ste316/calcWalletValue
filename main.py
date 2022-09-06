@@ -22,7 +22,7 @@ class calculateWalletValue:
         self.invalid_sym = []
         self.provider = ''
         self.supportedCurrency =  ['eur', 'usd']
-        self.supportedStablecoin = ['usdt', 'usdc']
+        self.supportedStablecoin = ['usdt', 'usdc', 'dai']
         self.load = load # option to load data from json, see genPltFromJson()
         lib.printWelcome(f'Welcome to Calculate Wallet Value!')
         lib.printWarn(f'Currency: {self.settings["currency"]}')
