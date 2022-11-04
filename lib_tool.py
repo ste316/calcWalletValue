@@ -1,4 +1,5 @@
 from json import load
+from datetime import datetime, timedelta
 
 class lib:
     OKGREEN = '\033[92m'
@@ -31,7 +32,17 @@ class lib:
     def getSettings() -> dict:
         with open('settings.json','r') as f:
             if(f.readable):
-                return load(f) # load settings in a dict
+                return load(f) # json.load settings in a dict
             else: 
                 lib.printFail('Error on reading settings')
                 exit()
+
+    @staticmethod
+    def getNextDay(day: str) -> datetime: 
+        return lib.parse_formatDate(day) + timedelta(days=1)
+    
+    @staticmethod
+    def parse_formatDate(day: str) -> datetime:
+        if type(day) == datetime:
+            return day
+        return datetime.strptime(day.split(' ')[0], '%d/%m/%Y')

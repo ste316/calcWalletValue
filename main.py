@@ -1,12 +1,12 @@
 from api import cg_api, yahooGetPriceOf
 from lib_tool import lib
-import json
 from pandas import read_csv
 from datetime import datetime
+from numpy import array
 import matplotlib.pyplot as plt
 import seaborn as sns
-from numpy import array
 import argparse
+import json
 import os
 
 # 
@@ -22,8 +22,8 @@ class calculateWalletValue:
         self.invalid_sym = []
         self.provider = ''
         self.supportedCurrency =  ['eur', 'usd']
-        self.supportedStablecoin = ['usdt', 'usdc', 'dai']
-        self.load = load # option to load data from json, see genPltFromJson()
+        self.supportedStablecoin = ['usdt', 'usdc','dai']
+        self.load = load # option to load data from json, see calculateWalletValue.genPltFromJson()
         lib.printWelcome(f'Welcome to Calculate Wallet Value!')
         lib.printWarn(f'Currency: {self.settings["currency"]}')
 
@@ -44,7 +44,8 @@ class calculateWalletValue:
 
         # if path is not specified in settings.json
         if not len(self.settings['path'] ) > 0:
-            basePath = f'{os.environ["USERPROFILE"]}\\Desktop\\crypto' # default path
+            lib.printFail('Specify path in settings.json file')
+            exit()
         else: basePath = self.settings['path']
 
         # set type of grafic visualization and json file
@@ -55,22 +56,15 @@ class calculateWalletValue:
             lib.printWarn(f'Report type: {self.type} wallet')
         else:
             lib.printFail('Unexpected error, pass the correct argument, run again with option --help')
-            exit
+            exit()
 
         if os.path.isdir(basePath):
             # create the needed folder and json file
             try:
                 os.mkdir(basePath)
-            except FileExistsError:
-                pass
-            except FileNotFoundError:
-                lib.printFail('Error on init, check path in settings.json')
-                exit()
-            
-            try:
                 os.mkdir(basePath+'\\grafico') 
             except FileExistsError:
-                pass   
+                pass
             except FileNotFoundError:
                 lib.printFail('Error on init, check path in settings.json')
                 exit()
@@ -83,7 +77,7 @@ class calculateWalletValue:
                 
             # set paths variable
             self.settings['grafico_path'] = basePath+'\\grafico'
-            if self.type == 'total': # set total wallet is reported in a different json file
+            if self.type == 'total': # set json file based on type
                 self.settings['json_path'] = basePath+'\\walletGeneralOverview.json'
             else:
                 self.settings['json_path'] = basePath+'\\walletValue.json'
@@ -110,8 +104,8 @@ class calculateWalletValue:
                 return False
             return price
         
-        # in case where there isn't a correct provider (should not happen)
-        lib.printFail('Unexpected error, provider error')
+        # in case where there isn't a correct provider
+        lib.printFail('Unexpected error, incorrect price provider')
         exit()
 
     # print invalid pairs, incorrect symbol
@@ -180,8 +174,8 @@ class calculateWalletValue:
 
     # format data to generate PLT
     # for crypto:
-    #   if value of a certain crypto is <= 5%
-    #   add special symbol OTHER and sum all crypto whose value is <= 5%
+    #   if value of a certain crypto is <= 2%
+    #   add special symbol 'other' and sum all crypto whose value is <= 5%
     # 
     # for total:
     #   there are only 2 symbols: crypto and fiat
@@ -196,13 +190,13 @@ class calculateWalletValue:
         }
 
         lib.printWarn('Preparing data...')
-        if self.type.lower() == 'crypto':
+        if self.type == 'crypto':
 
             for (symb, _, value) in dict['symbol']:
                 if symb in ['other', 'EUR', 'USD']: continue
 
-                # group together all elements in the dictionary whose value is less than 5%
-                if value / dict['total'] <= 0.05:
+                # group together all elements in the dictionary whose value is less than 2%
+                if value / dict['total'] <= 0.02:
                     if newdict['symbol'][0][0] != 'other': 
                         # create 'other' only once
                         newdict['symbol'] = [['other', 0.0], *newdict['symbol']] # add 'other' as first element
@@ -211,11 +205,11 @@ class calculateWalletValue:
                     # symbolo[0] = [symbol, value]
 
                 else:
-                    newdict['symbol'].append([symb, value]) # add symbol to PLT if its value is greater than 5%
+                    newdict['symbol'].append([symb, value]) # add symbol to PLT if its value is greater than 2%
 
             return newdict
 
-        elif self.type.lower() == 'total':
+        elif self.type == 'total':
             newdict['symbol'].append(['Crypto', 0]) # [<name>, <value>]
             newdict['symbol'].append(['Fiat', 0])
 
@@ -249,7 +243,7 @@ class calculateWalletValue:
         sns.color_palette('pastel')
         # define size of the image
         plt.figure(figsize=(6, 5), tight_layout=True)
-        # create a pie chart with value in xx.x% format
+        # create a pie chart with value in 'xx.x%' format
         plt.pie(y, labels = mylabels, autopct='%1.1f%%', startangle=90, shadow=False)
         # add legend and title to pie chart
         plt.legend(title = "Symbols:") 
@@ -263,12 +257,12 @@ class calculateWalletValue:
             # so only if --loadJson isn't specified save img and json file
             plt.savefig(f'{self.settings["grafico_path"]}\\{filename}') #save image
             lib.printOk(f'Pie chart image successfully saved in {self.settings["grafico_path"]}\{filename}')
-            self.updateWL(rawcrypto, filename) # update walletValue.json
+            self.updateJson(rawcrypto, filename) # update walletValue.json
 
         plt.show() 
 
     # write data to self.settings['json_path']
-    def updateWL(self, crypto: dict, filename: str):
+    def updateJson(self, crypto: dict, filename: str):
         new_file = ''
         temp = json.dumps({
             'date': crypto['date'],
@@ -291,7 +285,7 @@ class calculateWalletValue:
                 new_date = datetime.strptime(date['date'].split(' ')[0], '%d/%m/%Y')
                 file_date = datetime.strptime(crypto['date'].split(' ')[0], '%d/%m/%Y')
 
-                if new_date != file_date: # if file dates aren't equal to today date
+                if new_date != file_date: # if file dates aren't equal to today's date
                     new_file += line # add line to new file
         
         new_file += temp # add the latest record to new file
@@ -310,8 +304,8 @@ class calculateWalletValue:
             for line in f:
                 record.append(json.loads(line))
         
-        for (i, r) in enumerate(record):
-            print(f"[{i}] {r['date']}", end='\n')
+        for (i, record) in enumerate(record):
+            print(f"[{i}] {record['date']}", end='\n')
         
         lib.printWarn('Type one number...')
         gotIndex = False
@@ -319,7 +313,9 @@ class calculateWalletValue:
         while not gotIndex:
             try:
                 index = int(input())
-                gotIndex = True
+                if index >= 0 and index < len(record):
+                    gotIndex = True
+                else: lib.printFail('Insert an in range number...')
             except:
                 lib.printFail('Insert a valid number...')
 
@@ -335,7 +331,7 @@ class calculateWalletValue:
         self.genPlt(newdict)
 
     # main 
-    def calculateValue(self) -> dict: 
+    def calculateValue(self) -> None: 
         if self.load:
             self.genPltFromJson(self.settings['json_path'])
         else:
@@ -364,9 +360,62 @@ class walletBalanceReport:
             self.settings['json_path'] = self.settings['path']+ '\\walletValue.json'
         else: 
             lib.printFail('Unexpected error, select crypto or total using arguments.')
-            exit
+            exit()
         lib.printWarn(f'Currency: {self.settings["currency"]}')
         lib.printWarn(f'Report type: {self.type} wallet')
+
+    # get forex rate based on self.settings["currency"]
+    def getForexRate(self, line: dict):
+        if line['currency'] == 'USD' and self.settings["currency"] == 'EUR':
+            # get forex rate using yahoo api
+            return yahooGetPriceOf(f'{self.settings["currency"]}{line["currency"]}=X', '', True)
+        elif line['currency'] == 'EUR' and self.settings["currency"] == 'USD':
+            return yahooGetPriceOf(f'{line["currency"]}{self.settings["currency"]}=X', '', True)
+        else:
+            lib.printFail('Currency not supported')
+            exit()
+
+    # 
+    # load all DATETIME from json file
+    # to have a complete graph, when the next date is not the following date
+    # add the following date and the value of the last updated
+    #
+    def loadDatetime(self, data):
+        lib.printWarn(f'Loading value from {self.settings["json_path"]}...')
+        with open(self.settings['json_path'], 'r') as f:
+            firstI = True # first interaction
+            f = list(f) # each element of 'f' is a line
+            for i, line in enumerate(f):
+                if type(line) != dict:
+                    line = json.loads(line)
+
+                temp_date = lib.parse_formatDate(line['date']) # parse date format: dd/mm/yyyy
+                total_value = line['total_value']
+
+                # if currency of json line is different from settings.json currency
+                if line['currency'] != self.settings['currency']: 
+                    rate = self.getForexRate(line)
+                    total_value /= rate # convert value using current forex rate
+
+                if firstI:
+                    data['date'].append(temp_date)
+                    data['total_value'].append(total_value)
+                    firstI = False
+                    continue
+                
+                # calculate the last date in list + 1 day
+                lastDatePlus1d = lib.getNextDay(data['date'][-1])
+                # check if temp_date (new date to add) is equal to lastDatePlus1d
+                if temp_date == lastDatePlus1d:
+                    data['total_value'].append(total_value)
+                else:
+                    data['total_value'].append(data['total_value'][-1])
+                    f.insert(int(i)+1, line)
+                    # add line again because we added the same amount of the last in list
+                    # otherwise it didn't work properly
+
+                data['date'].append(lastDatePlus1d)
+        return data
 
     # parse and format data to create PLT
     def genPlt(self):
@@ -376,44 +425,7 @@ class walletBalanceReport:
             'currency': self.settings['currency']
         }
 
-        # load all DATETIME 
-        right_index = set()
-        lib.printWarn(f'Loading value from {self.settings["json_path"]}...')
-        with open(self.settings['json_path'], 'r') as f:
-            for (i, line) in enumerate(f):
-                try:
-                    line = json.loads(line)
-                except json.decoder.JSONDecodeError:
-                    lib.printFail(f'Errore decoding {self.settings["json_path"]} line: {i+1}, empty line or invalid json')
-                    continue
-                temp_date = line['date'].split(' ')[0] # parse date format: dd/mm/yyyy
-                if temp_date not in data['date']: # add date once
-                    data['date'].append(temp_date)
-                    right_index.add(i)
-
-        # convert all value to the currency specified in settings.json value
-        lib.printWarn('Validating data...')
-        with open(self.settings['json_path'], 'r') as f:
-            for (i, line) in enumerate(f):
-                if i in right_index:
-                    line = json.loads(line)
-                    total_value = line['total_value']
-                    # if currency of json line is different from settings.json currency
-                    if line['currency'] != self.settings['currency']: 
-
-                        if line['currency'] == 'USD' and self.settings["currency"] == 'EUR':
-                            # get forex rate using yahoo api
-                            rate = yahooGetPriceOf(f'{self.settings["currency"]}{line["currency"]}=X', '', True)
-                        elif line['currency'] == 'EUR' and self.settings["currency"] == 'USD':
-                            rate = yahooGetPriceOf(f'{line["currency"]}{self.settings["currency"]}=X', '', True)
-                        else:
-                            lib.printFail('Currency not supported')
-                            exit()
-                        
-                        total_value /= rate # convert value using current forex rate
-                    
-                    # add total_value to have total value over time
-                    data['total_value'].append(total_value)
+        data = self.loadDatetime(data)
 
         # create line chart
         lib.printWarn(f'Creating chart...')
@@ -421,8 +433,102 @@ class walletBalanceReport:
         sns.set_style('darkgrid') 
         # define size of the image
         plt.figure(figsize=(7, 6), tight_layout=True)
-        plt.plot(data['date'], data['total_value'], color='red', marker='o')
-        plt.title(f'{self.type.capitalize()} Balance from {data["date"][0]} to {data["date"][-1]} \nCurrency: {self.settings["currency"]}', fontsize=14, weight='bold') # add title
+        plt.plot(data['date'], data['total_value'], color='red', marker='')
+        plt.title(f'{self.type.capitalize()} Balance from {data["date"][0].strftime("%d %b %Y")} to {data["date"][-1].strftime("%d %b %Y")} \nCurrency: {self.settings["currency"]}', fontsize=14, weight='bold') # add title
+        # changing the fontsize and rotation of x ticks
+        plt.xticks(fontsize=6.5, rotation = 45)
+        plt.show()
+
+# 
+# See amount of a single crypto over time
+# a crypto ticker will be asked as user input from a list
+# 
+class cryptoBalanceReport:
+    # Initialization variable and general settings
+    def __init__(self) -> None: 
+        self.settings = lib.getSettings()
+        lib.printWelcome(f'Welcome to Crypto Balance Report!')
+        self.settings['json_path'] = self.settings['path']+ '\\walletValue.json'
+        self.cryptos = set()
+        self.ticker = ''
+        self.data = {
+            'date': [],
+            'amount': []
+        }
+
+    # retrieve all cryptos ever recorded in json file
+    def retrieveCryptoList(self) -> None:
+        with open(self.settings['json_path'], 'r') as f:
+            for line in f:
+                clist = json.loads(line)['crypto'][1:] # skip the first element, it's ["COIN, QTA, VALUE IN CURRENCY"]
+                for sublist in clist:
+                    if sublist[0].isupper():
+                        self.cryptos.add(sublist[0])
+        
+        self.cryptos = sorted(list(self.cryptos))
+
+    # ask user input for a crypto from a list
+    def getTickerInput(self) -> None:
+        for (i, r) in enumerate(self.cryptos):
+            print(f"[{i}] {r}", end='\n')
+        
+        lib.printWarn('Type one number...')
+        gotIndex = False
+
+        while not gotIndex:
+            try:
+                index = int(input())
+                if index >= 0 and index < len(self.cryptos):
+                    gotIndex = True
+                else: lib.printFail('Insert an in range number...')
+            except:
+                lib.printFail('Insert a valid number...')
+        
+        self.ticker = self.cryptos[index]
+
+    # collect amount and date
+    # fill amounts of all empty day with the last available
+    def retrieveAmountOverTime(self) -> None:
+        lib.printWarn(f'Loading value from {self.settings["json_path"]}...')
+        with open(self.settings['json_path'], 'r') as f:
+            firstI = True # first interaction
+            f = list(f) # each element of 'f' is a line
+            for index, line in enumerate(f):
+                temp = json.loads(line)
+                temp['date'] = lib.parse_formatDate(temp['date'])
+                clist = temp['crypto'][1:] # skip the first element, it's ["COIN, QTA, VALUE IN CURRENCY"]
+                for sublist in clist:
+                    if sublist[0] == self.ticker:
+                        if firstI: # first iteration of external loop
+                            self.data['amount'].append(sublist[1])
+                            self.data['date'].append(temp['date'])
+                            firstI = False
+                            continue
+                        
+                        # calculate the last date in list + 1 day
+                        lastDatePlus1d = lib.getNextDay(self.data['date'][-1])
+                        # check if temp['date'] (new date to add) is equal to lastDatePlus1d
+                        if temp['date'] == lastDatePlus1d:
+                            self.data['amount'].append(sublist[1])
+                        else:
+                            self.data['amount'].append(self.data['amount'][-1])
+                            f.insert( int(index)+1, line) 
+                            # add line again because we added the same amount of the last in list
+                            # otherwise it didn't work properly
+                        self.data['date'].append(lastDatePlus1d)                 
+
+    def genPlt(self) -> None:
+        self.retrieveCryptoList()
+        self.getTickerInput()
+        self.retrieveAmountOverTime()
+
+        lib.printWarn(f'Creating chart...')
+        # set background [white, dark, whitegrid, darkgrid, ticks]
+        sns.set_style('darkgrid') 
+        # define size of the image
+        plt.figure(figsize=(7, 6), tight_layout=True)
+        plt.plot(self.data['date'], self.data['amount'], color='red')
+        plt.title(f'{self.ticker} amount from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=14, weight='bold') # add title
         # changing the fontsize and rotation of x ticks
         plt.xticks(fontsize=6.5, rotation = 45)
         plt.show()
@@ -442,20 +548,23 @@ def get_args():
     parser.add_argument('--calc', dest='calcV',action="store_true", help='calculate wallet value')
     parser.add_argument('-r','--report', dest='report',action="store_true", help='view wallet value over time')
     parser.add_argument('--loadJson', dest='load', action='store_true', help='load past data and view it')
+    parser.add_argument('--singleCrypto', dest='reportSingleCrypto', action='store_true', help='view balance of a crypto over time')
     option = parser.parse_args()
-    if (not option.calcV and not option.report) or (not option.crypto and not option.total):
+    if (not option.calcV and not option.report) or (not option.crypto and not option.total and not option.reportSingleCrypto):
         parser.error("[-] Specify value or report and crypto or total balance")
     return option
 
 if __name__ == '__main__':
     option = get_args()
 
-    if (option.report or option.calcV or option.load) and (option.crypto or option.total):
+    if (option.report or option.calcV or option.load) and (option.crypto or option.total or option.reportSingleCrypto):
         if option.report:
             if option.crypto:
                 main = walletBalanceReport('crypto')
             elif option.total:
                 main = walletBalanceReport('total')
+            elif option.reportSingleCrypto:
+                main = cryptoBalanceReport()
             else: 
                 lib.printFail('Select crypto or total option')
                 exit
