@@ -4,7 +4,6 @@ from lib_tool import lib
 from requests import exceptions
 from time import sleep
 import pandas_datareader as web
-from datetime import date
 import yfinance as yf
 
 #
