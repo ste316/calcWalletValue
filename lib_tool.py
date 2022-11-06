@@ -30,7 +30,11 @@ class lib:
 
     @staticmethod
     def getSettings() -> dict:
-        with open('settings.json','r') as f:
+        return lib.loadJsonFile('settings.json')
+
+    @staticmethod
+    def loadJsonFile(file: str) -> dict:
+        with open(file,'r') as f:
             if(f.readable):
                 return load(f) # json.load settings in a dict
             else: 

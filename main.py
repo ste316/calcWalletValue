@@ -1,4 +1,4 @@
-from api import cg_api, yahooGetPriceOf
+from api import cg_api, cmc_api, yahooGetPriceOf
 from lib_tool import lib
 from pandas import read_csv
 from datetime import datetime
@@ -27,20 +27,25 @@ class calculateWalletValue:
         lib.printWelcome(f'Welcome to Calculate Wallet Value!')
         lib.printWarn(f'Currency: {self.settings["currency"]}')
 
-        # read price provider specified in settings.json
+        # set price provider
         if self.settings['api_provider']['provider'] == 'cg':
             lib.printWarn('Api Provider: CoinGecko')
             self.provider = 'cg'
             self.cg = cg_api(self.settings['currency'])
 
-            # fetch all crypto symbol and name from CoinGecko
-            # run once or if there is any new crypto that is needed
-            if self.settings['api_provider']['cgFetchSymb'] == True: 
-                self.cg.fetchID()
-                lib.printOk('Coin list successfully fetched and saved')
+        elif self.settings['api_provider']['provider'] == 'cmc':
+            lib.printWarn('Api Provider: CoinMarketCap')
+            self.provider = 'cmc'
+            self.cmc = cmc_api(self.settings['currency'], self.settings['api_provider']['CMC_key'])
         else:
             lib.printFail("Specify a correct price provider")
-            exit
+            exit()
+
+        # fetch all crypto symbol and name from CoinGecko or CoinMarketCap
+        # run once or if there is any new crypto
+        if self.settings['api_provider']['fetchSymb'] == True: 
+            self.cg.fetchID()
+            lib.printOk('Coin list successfully fetched and saved')
 
         # if path is not specified in settings.json
         if not len(self.settings['path'] ) > 0:
@@ -50,7 +55,6 @@ class calculateWalletValue:
 
         # set type of grafic visualization and json file
         # N.B. <type> is passed in arguments when you execute the script
-        # if type == 'crypto' or type == 'total': 
         if type in ['crypto', 'total']: 
             self.type = type
             lib.printWarn(f'Report type: {self.type} wallet')
@@ -91,20 +95,39 @@ class calculateWalletValue:
         df = read_csv('input.csv', parse_dates=True) # pandas.read_csv()
         return df.values.tolist() # convert dataFrame to list []
 
-    # retrieve price of a crypto vs currency
-    def getPriceOf(self, symbol) -> float: 
+    # CoinGecko retrieve price of a crypto vs currency
+    def getPriceOf(self, symbol: str) -> float: 
         if self.provider == 'cg': # coingecko
-            if symbol.upper() == self.settings['currency']: # if symbol is the currency
+            # if symbol is the main currency, just return the qta
+            # no need to retrieve exchange rate 
+            if symbol.upper() == self.settings['currency']:
                 return 1
 
-            price = self.cg.getPriceOf(symbol) # retrieve price
+            price = self.cg.getPriceOf(symbol)
             if price == False: # if api wasn't able to retrieve price it return false
                 self.invalid_sym.append(symbol)
                 lib.printFail(f'Error getting price of {symbol}-{self.settings["currency"]}')
                 return False
             return price
-        
-        # in case where there isn't a correct provider
+
+        lib.printFail('Unexpected error, incorrect price provider')
+        exit()
+
+    # CoinMarketCap retrieve price of a crypto vs currency
+    def CMCgetPriceOf(self, symbol: list) -> dict:
+        if self.provider == 'cmc': #CoinMarketCap
+            symbol = list(symbol)
+            symbol = [x.upper() for x in symbol] 
+            temp = self.cmc.getPriceOf(symbol)
+            if not temp[1]: # if temp[1] is false, it means that some/all price are missing 
+                (dict, _, missing) = temp
+                self.invalid_sym.extend(list(missing))
+                if len(dict) <= 0: # check if all price are missing
+                    lib.printFail('Unexpected error, unable to retrieve price data')
+                    exit()
+            else:
+                (dict, _) = temp
+            return dict
         lib.printFail('Unexpected error, incorrect price provider')
         exit()
 
@@ -121,7 +144,12 @@ class calculateWalletValue:
         data = dict()
         lib.printWarn('Validating data...')
 
-        for (symbol, qta, _addy) in crypto: 
+        for (symbol, qta, _addy) in crypto:
+            # since input.csv file serves both crypto and total
+            # when you calc crypto you DO NOT want eur or usd included
+            if self.type == 'crypto' and symbol.lower() in self.supportedCurrency: 
+                continue
+
             # _addy is refering to a certain address of a certain crypto (future use)
             try:
                 qta = float(qta) # convert str to float
@@ -136,19 +164,48 @@ class calculateWalletValue:
                 data[symbol] = qta
         return data
 
-    # calculate the value of crypto and format data to be used in handleDataPlt()
+    # CoinMarketCap calculate the value of crypto and format data to be used in handleDataPlt()
+    def CMCcalcValue(self, crypto: dict):
+        data = list()
+        tot = 0.0
+        lib.printWarn('Retriving current price...')
+        rawData = self.CMCgetPriceOf(crypto.keys()) # get prices
+
+        for (symbol, price) in rawData.items(): # unpack and calc value
+            value = round(price * crypto[symbol.lower()], 2)
+            data.append([symbol, crypto[symbol.lower()], value]) # crypto[symbol] is qta
+            tot += value
+
+        if self.type == 'total':
+            for (symbol, qta) in crypto.items():
+                # you want to exchange the other fiat currency into the currency in settings
+                if symbol.upper() != self.settings['currency'] and symbol.lower() in self.supportedCurrency:
+                    price = yahooGetPriceOf(f'{self.settings["currency"]}{symbol}=X')
+                    value = round(price * qta, 2)
+                    data.append([symbol, qta, value])
+                    tot += value 
+
+                # if symbol is the main currency, just return the qta
+                # no need to retrieve exchange rate 
+                if symbol.upper() == self.settings['currency']:
+                    value = round(qta, 2)
+                    data.append([symbol, qta, value])
+                    tot += value
+
+        return {
+            'date': str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), # current data
+            'total': round(tot,2), # total value of all crypto
+            'currency': self.settings["currency"], 
+            'symbol': sorted(data) # is list of [symbol,qta,value]
+        }
+
+    # CoinGecko calculate the value of crypto and format data to be used in handleDataPlt()
     def calcValue(self, crypto: dict) -> dict:
         data = list()
         tot = 0.0
-
         lib.printWarn('Retriving current price...')
-        for (symbol, qta) in crypto.items():
 
-            # since input.csv file serves both crypto and total
-            # when you calc crypto you DO NOT want eur or usd included
-            if self.type == 'crypto' and symbol.lower() in self.supportedCurrency: 
-                continue
-            
+        for (symbol, qta) in crypto.items():
             # when you calc total
             # you want to exchange the other fiat currency into the currency in settings
             if self.type == 'total' and symbol.upper() != self.settings['currency'] and symbol.lower() in self.supportedCurrency:
@@ -175,12 +232,12 @@ class calculateWalletValue:
     # format data to generate PLT
     # for crypto:
     #   if value of a certain crypto is <= 2%
-    #   add special symbol 'other' and sum all crypto whose value is <= 5%
+    #   add special symbol 'other' and sum all crypto whose value is <= 2%
     # 
     # for total:
     #   there are only 2 symbols: crypto and fiat
     #   crypto value is the total sum of cryptos
-    #   fiat value is the total sum of fiat converted in self.settings['currency']
+    #   fiat value is the total sum of fiat and stablecoins converted in self.settings['currency']
     def handleDataPlt(self, dict: dict) -> dict:
         newdict = {
             'total': dict['total'],
@@ -191,7 +248,6 @@ class calculateWalletValue:
 
         lib.printWarn('Preparing data...')
         if self.type == 'crypto':
-
             for (symb, _, value) in dict['symbol']:
                 if symb in ['other', 'EUR', 'USD']: continue
 
@@ -337,7 +393,10 @@ class calculateWalletValue:
         else:
             rawCrypto = self.loadCSV()
             rawCrypto = self.checkInput(rawCrypto)
-            rawCrypto = self.calcValue(rawCrypto)
+            if self.provider == 'cg':
+                rawCrypto = self.calcValue(rawCrypto)
+            if self.provider == 'cmc':
+                rawCrypto = self.CMCcalcValue(rawCrypto)
             if self.invalid_sym:
                 self.showInvalidSymbol()
 
@@ -451,9 +510,10 @@ class cryptoBalanceReport:
         self.settings['json_path'] = self.settings['path']+ '\\walletValue.json'
         self.cryptos = set()
         self.ticker = ''
+        self.type = ''
         self.data = {
             'date': [],
-            'amount': []
+            'y': []
         }
 
     # retrieve all cryptos ever recorded in json file
@@ -486,6 +546,27 @@ class cryptoBalanceReport:
         
         self.ticker = self.cryptos[index]
 
+    # ask user input to choose type
+    def getTypeInput(self) -> None:
+        lib.printWarn('Choose between: ')
+        print('[1] Amount\n[2] Fiat Value')
+        gotIndex = False
+
+        while not gotIndex:
+            try:
+                index = int(input())
+                if index in [1,2] :
+                    gotIndex = True
+                else: lib.printFail('Insert an in range number...')
+            except:
+                lib.printFail('Insert a valid number...')
+        
+        if index == 1:
+            self.type = 'amt'
+        elif index == 2:
+            self.type = 'fiat'
+        else: exit()
+
     # collect amount and date
     # fill amounts of all empty day with the last available
     def retrieveAmountOverTime(self) -> None:
@@ -500,7 +581,11 @@ class cryptoBalanceReport:
                 for sublist in clist:
                     if sublist[0] == self.ticker:
                         if firstI: # first iteration of external loop
-                            self.data['amount'].append(sublist[1])
+                            if self.type == 'amt':
+                                self.data['y'].append(sublist[1])
+                            elif self.type == 'fiat':
+                                self.data['y'].append(sublist[2])
+                            else: exit()
                             self.data['date'].append(temp['date'])
                             firstI = False
                             continue
@@ -509,9 +594,13 @@ class cryptoBalanceReport:
                         lastDatePlus1d = lib.getNextDay(self.data['date'][-1])
                         # check if temp['date'] (new date to add) is equal to lastDatePlus1d
                         if temp['date'] == lastDatePlus1d:
-                            self.data['amount'].append(sublist[1])
+                            if self.type == 'amt':
+                                self.data['y'].append(sublist[1])
+                            elif self.type == 'fiat':
+                                self.data['y'].append(sublist[2])
+                            else: exit()
                         else:
-                            self.data['amount'].append(self.data['amount'][-1])
+                            self.data['y'].append(self.data['y'][-1])
                             f.insert( int(index)+1, line) 
                             # add line again because we added the same amount of the last in list
                             # otherwise it didn't work properly
@@ -520,6 +609,7 @@ class cryptoBalanceReport:
     def genPlt(self) -> None:
         self.retrieveCryptoList()
         self.getTickerInput()
+        self.getTypeInput()
         self.retrieveAmountOverTime()
 
         lib.printWarn(f'Creating chart...')
@@ -527,7 +617,7 @@ class cryptoBalanceReport:
         sns.set_style('darkgrid') 
         # define size of the image
         plt.figure(figsize=(7, 6), tight_layout=True)
-        plt.plot(self.data['date'], self.data['amount'], color='red')
+        plt.plot(self.data['date'], self.data['y'], color='red')
         plt.title(f'{self.ticker} amount from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=14, weight='bold') # add title
         # changing the fontsize and rotation of x ticks
         plt.xticks(fontsize=6.5, rotation = 45)
