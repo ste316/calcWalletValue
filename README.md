@@ -12,29 +12,29 @@
 
 2. Usage:
     * Calculate and see value of your crypto portfolio:
-        * main.py --calc --crypto
+        * `main.py --calc --crypto`
     
     * Calculate and see value of your total portfolio(crypto+fiat):
-        * main.py --calc --total
+        * `main.py --calc --total`
     
     * See value of your crypto portfolio in a spefic date:
-        * main.py --calc --crypto --loadJson
+        * `main.py --calc --crypto --loadJson`
         * NOTE: this function load data from walletValue.json
     
     * See value of your total portfolio in a spefic date:
-        * main.py --calc --total --loadJson
+        * `main.py --calc --total --loadJson`
         * NOTE: this function load data from walletGeneralOverview.json
     
     * See your crypto portfolio's value over time:
-        * main.py --report --crypto
+        * `main.py --report --crypto`
         * NOTE: this function load data from walletValue.json
 
     * See your crypto portfolio's value over time:
-        * main.py --report --total
+        * `main.py --report --total`
         * NOTE: this function load data from walletGeneralOverview.json
 
     * See a single crypto amount/value in fiat over time:
-        * main.py --report --singleCrypto
+        * `main.py --report --singleCrypto`
         * NOTE: this function load data from walletValue.json
 
 3. Examples
