@@ -296,7 +296,7 @@ class calculateWalletValue:
 
         # grafic settings
         sns.set_style('whitegrid')
-        sns.color_palette('pastel')
+        #sns.color_palette('pastel')
         # define size of the image
         plt.figure(figsize=(6, 5), tight_layout=True)
         # create a pie chart with value in 'xx.x%' format
@@ -474,6 +474,7 @@ class walletBalanceReport:
                     # otherwise it didn't work properly
 
                 data['date'].append(lastDatePlus1d)
+
         return data
 
     # parse and format data to create PLT
@@ -604,7 +605,12 @@ class cryptoBalanceReport:
                             f.insert( int(index)+1, line) 
                             # add line again because we added the same amount of the last in list
                             # otherwise it didn't work properly
-                        self.data['date'].append(lastDatePlus1d)                 
+                        self.data['date'].append(lastDatePlus1d)
+
+        # add zero value
+        day0 = lib.getPreviousDay(self.data['date'][0])
+        self.data['date'] = [day0, *self.data['date']]
+        self.data['y'] = [0, *self.data['y']]
 
     def genPlt(self) -> None:
         self.retrieveCryptoList()
@@ -618,7 +624,8 @@ class cryptoBalanceReport:
         # define size of the image
         plt.figure(figsize=(7, 6), tight_layout=True)
         plt.plot(self.data['date'], self.data['y'], color='red')
-        plt.title(f'{self.ticker} amount from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=14, weight='bold') # add title
+        title = 'Amount' if self.type == 'amt' else 'Value'
+        plt.title(f'{title} of {self.ticker} {"in eur" if self.type == "fiat" else ""} from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=14, weight='bold') # add title
         # changing the fontsize and rotation of x ticks
         plt.xticks(fontsize=6.5, rotation = 45)
         plt.show()

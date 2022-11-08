@@ -46,6 +46,10 @@ class lib:
         return lib.parse_formatDate(day) + timedelta(days=1)
     
     @staticmethod
+    def getPreviousDay(day: str) -> datetime: 
+        return lib.parse_formatDate(day) - timedelta(days=1)
+    
+    @staticmethod
     def parse_formatDate(day: str) -> datetime:
         if type(day) == datetime:
             return day
