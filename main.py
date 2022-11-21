@@ -45,7 +45,10 @@ class calculateWalletValue:
         # fetch all crypto symbol and name from CoinGecko or CoinMarketCap
         # run once or if there is any new crypto
         if self.settings['api_provider']['fetchSymb'] == True: 
-            self.cg.fetchID()
+            if self.provider == 'cg':
+                self.cg.fetchID()
+            if self.provider == 'cmc':
+                self.cmc.fetchID()
             lib.printOk('Coin list successfully fetched and saved')
 
         # if path is not specified in settings.json
@@ -119,10 +122,9 @@ class calculateWalletValue:
         if self.provider == 'cmc': #CoinMarketCap
             symbol = list(symbol)
             symbol = [x.upper() for x in symbol] 
-            print(symbol)
             temp = self.cmc.getPriceOf(symbol)
-            if not temp[1]: # if temp[1] is false, it means that some/all price are missing 
-                (dict, _, missing) = temp
+            if not temp[1]: # if temp[1] is false, it means that one or more prices are missing 
+                (dict, _, missing, data) = temp
                 self.invalid_sym.extend(list(missing))
                 if len(dict) <= 0: # check if all price are missing
                     lib.printFail('Unexpected error, unable to retrieve price data')

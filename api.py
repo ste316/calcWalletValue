@@ -176,7 +176,7 @@ class cmc_api:
             if found > 0:
                 self.cachedSymbol.update(id)
                 self.updateUsedSymbol()
-        print(id)
+                
         return id # format {'<ticker>': <id>, }
 
     # update used_id_CMC.json
