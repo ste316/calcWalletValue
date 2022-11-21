@@ -6,8 +6,7 @@
     * Note: the first time you run the program make sure to fill cgFetchSymb with true
 
     * You can choose between CoinGecko and CoinMarketCap api
-        * CoinGecko api is free and you do NOT need any key, see [plan](https://www.coingecko.com/en/api/pricing) and
-        [limits](https://www.coingecko.com/en/api/documentation)
+        * CoinGecko api is free and you do NOT need any key, see [limits](https://www.coingecko.com/en/api/documentation)
         * [FASTER] CoinMarketCap it's free too and you need to [sign in](https://pro.coinmarketcap.com/login/) and get an api key
 
 2. Usage:
@@ -33,7 +32,7 @@
         * `main.py --report --total`
         * NOTE: this function load data from walletGeneralOverview.json
 
-    * See a single crypto amount/value in fiat over time:
+    * See a single crypto amount and value in fiat over time:
         * `main.py --report --singleCrypto`
         * NOTE: this function load data from walletValue.json
 
