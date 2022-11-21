@@ -26,7 +26,7 @@ class cg_api:
         # and search the right one by looking at name field
         self.cachedSymbol = ['crypto-com-chain', 'terra-luna-2', 'the-sandbox', 
                             'astroport', 'energy-web-token', 'terra-name-service',
-                            'mars-protocol','usd-coin','thorchain', 'avalanche-2', 'cosmos']
+                            'mars-protocol','usd-coin','thorchain', 'avalanche-2', 'cosmos', 'flow']
 
     # fetch all id, symbol and name from CoinGecko
     # run only once
@@ -69,9 +69,10 @@ class cg_api:
                 sleep(0.7)
                 continue
             except ValueError as e:
-                lib.printFail('Error, you are rate limited, sleeping 61 seconds...')
+                n = 100
+                lib.printFail(f'Error, you are rate limited, sleeping {n} seconds...')
                 self.error_count +=1
-                sleep(61)
+                sleep(n)
                 continue
         
         if rtrn[id] == {}: # ticker found but not listed(not have a price on coingecko)

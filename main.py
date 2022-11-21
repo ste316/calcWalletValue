@@ -24,6 +24,7 @@ class calculateWalletValue:
         self.supportedCurrency =  ['eur', 'usd']
         self.supportedStablecoin = ['usdt', 'usdc','dai']
         self.load = load # option to load data from json, see calculateWalletValue.genPltFromJson()
+        self.total_invested = 0 
         lib.printWelcome(f'Welcome to Calculate Wallet Value!')
         lib.printWarn(f'Currency: {self.settings["currency"]}')
 
@@ -143,7 +144,7 @@ class calculateWalletValue:
     def checkInput(self, crypto: list) -> dict:
         data = dict()
         lib.printWarn('Validating data...')
-
+        
         for (symbol, qta, _addy) in crypto:
             # since input.csv file serves both crypto and total
             # when you calc crypto you DO NOT want eur or usd included
@@ -156,6 +157,14 @@ class calculateWalletValue:
             except ValueError:
                 lib.printFail(f'Error parsing value of {symbol}')
                 continue
+
+            # add total_invested from csv to self.total_invested if crypto otherwise igore it
+            if symbol == 'total_invested':
+                if self.type == 'crypto':
+                    self.total_invested = qta
+                    continue
+                else:
+                    continue
             
             # if input.csv contain a symbol multiple time
             if symbol in list(data.keys()): 
@@ -302,8 +311,12 @@ class calculateWalletValue:
         # create a pie chart with value in 'xx.x%' format
         plt.pie(y, labels = mylabels, autopct='%1.1f%%', startangle=90, shadow=False)
         # add legend and title to pie chart
-        plt.legend(title = "Symbols:") 
-        plt.title(f'{self.type.capitalize()} Balance: {dict["total"]} {dict["currency"]} | {dict["date"]}', fontsize=13, weight='bold')
+        plt.legend(title = "Symbols:")
+        if self.type == 'crypto':
+            increasePercent = round((dict['total'] - self.total_invested)/self.total_invested *100, 2)
+            plt.title(f'{self.type.capitalize()} Balance: {dict["total"]} {dict["currency"]} ({increasePercent if self.type == "crypto" else ""}{" ↑" if increasePercent>0 else " ↓" if self.type == "crypto" else ""}) | {dict["date"]}', fontsize=13, weight='bold')
+        else:
+            plt.title(f'{self.type.capitalize()} Balance: {dict["total"]} {dict["currency"]} | {dict["date"]}', fontsize=13, weight='bold')
 
         # format filename using current date
         filename = dict['date'].replace("/",'_').replace(':','_').replace(' ',' T')+'.png'
@@ -317,7 +330,7 @@ class calculateWalletValue:
 
         plt.show() 
 
-    # write data to self.settings['json_path']
+    # update data in self.settings['json_path']
     def updateJson(self, crypto: dict, filename: str):
         new_file = ''
         temp = json.dumps({
@@ -500,7 +513,7 @@ class walletBalanceReport:
         plt.show()
 
 # 
-# See amount of a single crypto over time
+# See amount and fiat value of a single crypto over time
 # a crypto ticker will be asked as user input from a list
 # 
 class cryptoBalanceReport:
@@ -514,7 +527,8 @@ class cryptoBalanceReport:
         self.type = ''
         self.data = {
             'date': [],
-            'y': []
+            'amt': [],
+            'fiat': []
         }
 
     # retrieve all cryptos ever recorded in json file
@@ -547,6 +561,7 @@ class cryptoBalanceReport:
         
         self.ticker = self.cryptos[index]
 
+    # OUTDATED CODE
     # ask user input to choose type
     def getTypeInput(self) -> None:
         lib.printWarn('Choose between: ')
@@ -582,11 +597,8 @@ class cryptoBalanceReport:
                 for sublist in clist:
                     if sublist[0] == self.ticker:
                         if firstI: # first iteration of external loop
-                            if self.type == 'amt':
-                                self.data['y'].append(sublist[1])
-                            elif self.type == 'fiat':
-                                self.data['y'].append(sublist[2])
-                            else: exit()
+                            self.data['amt'].append(sublist[1])
+                            self.data['fiat'].append(sublist[2])
                             self.data['date'].append(temp['date'])
                             firstI = False
                             continue
@@ -595,13 +607,11 @@ class cryptoBalanceReport:
                         lastDatePlus1d = lib.getNextDay(self.data['date'][-1])
                         # check if temp['date'] (new date to add) is equal to lastDatePlus1d
                         if temp['date'] == lastDatePlus1d:
-                            if self.type == 'amt':
-                                self.data['y'].append(sublist[1])
-                            elif self.type == 'fiat':
-                                self.data['y'].append(sublist[2])
-                            else: exit()
+                            self.data['amt'].append(sublist[1])
+                            self.data['fiat'].append(sublist[2])
                         else:
-                            self.data['y'].append(self.data['y'][-1])
+                            self.data['amt'].append(self.data['amt'][-1])
+                            self.data['fiat'].append(self.data['fiat'][-1])
                             f.insert( int(index)+1, line) 
                             # add line again because we added the same amount of the last in list
                             # otherwise it didn't work properly
@@ -610,22 +620,29 @@ class cryptoBalanceReport:
         # add zero value
         day0 = lib.getPreviousDay(self.data['date'][0])
         self.data['date'] = [day0, *self.data['date']]
-        self.data['y'] = [0, *self.data['y']]
+        self.data['amt'] = [0, * self.data['amt']]
+        self.data['fiat'] = [0, *self.data['fiat']]
 
     def genPlt(self) -> None:
         self.retrieveCryptoList()
         self.getTickerInput()
-        self.getTypeInput()
+        #self.getTypeInput()
         self.retrieveAmountOverTime()
 
         lib.printWarn(f'Creating chart...')
         # set background [white, dark, whitegrid, darkgrid, ticks]
         sns.set_style('darkgrid') 
-        # define size of the image
-        plt.figure(figsize=(7, 6), tight_layout=True)
-        plt.plot(self.data['date'], self.data['y'], color='red')
-        title = 'Amount' if self.type == 'amt' else 'Value'
-        plt.title(f'{title} of {self.ticker} {"in eur" if self.type == "fiat" else ""} from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=14, weight='bold') # add title
+
+        # create 2 subplots for amount and value over time
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.plot(self.data['date'], self.data['amt'], 'g-')
+        ax2.plot(self.data['date'], self.data['fiat'], 'r-')
+        ax1.set_xlabel('Dates')
+        ax1.set_ylabel('Amount', color='g')
+        ax2.set_ylabel('Fiat Value', color='r')
+        # add title
+        plt.title(f'Amount and fiat value of {self.ticker} in eur from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=12, weight='bold')
         # changing the fontsize and rotation of x ticks
         plt.xticks(fontsize=6.5, rotation = 45)
         plt.show()
