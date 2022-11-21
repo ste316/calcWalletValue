@@ -119,6 +119,7 @@ class calculateWalletValue:
         if self.provider == 'cmc': #CoinMarketCap
             symbol = list(symbol)
             symbol = [x.upper() for x in symbol] 
+            print(symbol)
             temp = self.cmc.getPriceOf(symbol)
             if not temp[1]: # if temp[1] is false, it means that some/all price are missing 
                 (dict, _, missing) = temp

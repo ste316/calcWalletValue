@@ -7,7 +7,7 @@ import pandas_datareader as web
 import yfinance as yf
 
 #
-# Main price provider
+# CoinGecko api
 # Implementation of https://github.com/man-c/pycoingecko
 #
 class cg_api:
@@ -90,7 +90,7 @@ class cg_api:
         #
 
     # 'symbol' is a ticker
-    # getPriceOf() return current price of that symbol
+    # return current price of that symbol
     def getPriceOf(self, symbol: str):
         dict = self.convertSymbol2ID(symbol)
         if len(dict['id']) < 1: return False # if no id is found, let the caller handle the error
@@ -126,6 +126,9 @@ def yahooGetPriceOf(symbol: str):
 from requests import Session
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 
+#
+# CoinMarketCap Api
+#
 class cmc_api:
     def __init__(self, currency: str, api_key: str) -> None:
         self.currency = currency
@@ -133,7 +136,7 @@ class cmc_api:
         self.baseurl = f'https://pro-api.coinmarketcap.com/v1/cryptocurrency/'
         self.cachedSymbol = lib.loadJsonFile('used_id_CMC.json')
 
-        headers = {
+        headers = { 
             'Accepts': 'application/json',
             'Accept-Encoding': 'deflate, gzip',
             'X-CMC_PRO_API_KEY': self.key,
@@ -152,17 +155,18 @@ class cmc_api:
     # convert a list of symbol in cmc id
     def convertSymbols2ID(self, symbol: list) -> dict:
         id = {}
-        symbol = symbol
 
+        # check if there are some cached symbol
         for i, symb in enumerate(symbol):
             if symb in self.cachedSymbol:
                 id[symb] = self.cachedSymbol[symb]
-                symbol.pop(i)
+                symbol.pop(i) # remove from searching list
 
-        if len(symbol) > 0:
+        if len(symbol) > 0: 
             found = 0
-            data = json.loads(open('cached_id_CMC.json', 'r').read())['data']
+            data = json.loads(open('cached_id_CMC.json', 'r').read())['data'] # once in a while run fetchID() to update it
 
+            # check for every symbol in data
             for i in range(len(data)):
                 if data[i]['symbol'] in symbol:
                     id[data[i]['symbol']] = str(data[i]['id'])
@@ -171,18 +175,21 @@ class cmc_api:
 
             if found > 0:
                 self.cachedSymbol.update(id)
-                self.updateCachedSymbol()
-
+                self.updateUsedSymbol()
+        print(id)
         return id # format {'<ticker>': <id>, }
 
-    def updateCachedSymbol(self) -> None:
+    # update used_id_CMC.json
+    def updateUsedSymbol(self) -> None:
         with open('used_id_CMC.json', 'w') as f:
             f.write(json.dumps(self.cachedSymbol))
 
+    # 'symbol' is a list of ticker
+    # return current price of those symbols
     def getPriceOf(self, symbol: list):
-        url = 'quotes/latest'
-        symbol = self.convertSymbols2ID(symbol)
-        id = list(symbol.values())
+        path = 'quotes/latest'
+        convertedSymbol = self.convertSymbols2ID(symbol)
+        id = list(convertedSymbol.values())
 
         toReturn = {}        
 
@@ -192,20 +199,22 @@ class cmc_api:
         }
 
         try:
-            response = self.session.get(self.baseurl+url, params=parameters)
+            response = self.session.get(self.baseurl+path, params=parameters)
             data = json.loads(response.text)
-            for symb, id in symbol.items():
-                toReturn[symb] = data['data'][id]["quote"][self.currency]["price"]
+            for symb, id in convertedSymbol.items():
+                toReturn[symb] = data['data'][id]["quote"][self.currency]["price"] # store only price
 
         except (ConnectionError, Timeout, TooManyRedirects):
             data = json.loads(response.text)
         
-        if (set(symbol.keys()) & set(toReturn.keys())) != set(symbol):
-            return (toReturn, False, set(symbol.keys()) - set(toReturn.keys()))
+        # if one or more symbols are not found for any kind of problem 
+        # return also the missing one(s) and data
+        if (set(convertedSymbol.keys()) & set(toReturn.keys())) != set(symbol):
+            return (toReturn, False, set(symbol) - set(toReturn.keys()), data)
         
         return (toReturn, True)
 
 if __name__ == '__main__':
     sett = lib.getSettings()
     cmc = cmc_api(sett['currency'], sett['api_provider']['CMC_key'])
-    cmc.getPriceOf([['BTC','MATIC','JUNO','AVAX','SOL']])
+    print(cmc.getPriceOf(['BTC','MATIC','JUNO','AVAX', 'DJERNB']))
