@@ -38,7 +38,7 @@
 
 3. Examples
 
-    ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto.png)
+    ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto_.png)
 
     ![total](https://github.com/ste316/calcWalletValue/blob/main/img/total.png)
 
