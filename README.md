@@ -1,4 +1,5 @@
 1. Prerequisites:
+    * Install python 3.10
     * To get all dependencies run: `pip install -r requirements.txt`
     * Insert all assets in input.csv, you don't need to add any address, it's for future implementation
     * You can choose between CoinGecko and CoinMarketCap api
