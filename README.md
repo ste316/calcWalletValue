@@ -2,7 +2,7 @@
     * To get all dependencies run: `pip install -r requirements.txt`
     * Insert all assets in input.csv, you don't need to add any address, it's for future implementation
     * Fill settings.json with you preference
-        * provider can be cg for CoinGecko or cmc for CoinMarketCap
+        * provider can be `cg` for CoinGecko or `cmc` for CoinMarketCap
     * Note: the first time you run the program make sure to fill cgFetchSymb with true
 
     * You can choose between CoinGecko and CoinMarketCap api
