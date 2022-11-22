@@ -1,7 +1,7 @@
 {
     "currency": "EUR",
     "api_provider": {
-        "provider": "cmc",
+        "provider": "cg",
         "fetchSymb": true,
         "CMC_key": "YOUR_API_KEY"
     },
