@@ -313,10 +313,20 @@ class calculateWalletValue:
         plt.figure(figsize=(6, 5), tight_layout=True)
         # create a pie chart with value in 'xx.x%' format
         plt.pie(y, labels = mylabels, autopct='%1.1f%%', startangle=90, shadow=False)
+
+        skip = False
+        ti = self.total_invested # total invested
+        if self.total_invested == 0:
+            if 'total_invested' in dict.keys():
+                if dict['total_invested'] != 0:
+                    ti = dict['total_invested']
+                else: skip = True
+            else: skip = True # if both are 0
+
         # add legend and title to pie chart
         plt.legend(title = "Symbols:")
-        if self.type == 'crypto':
-            increasePercent = round((dict['total'] - self.total_invested)/self.total_invested *100, 2)
+        if self.type == 'crypto' and not skip:
+            increasePercent = round((dict['total'] - ti)/ti *100, 2)
             plt.title(f'{self.type.capitalize()} Balance: {dict["total"]} {dict["currency"]} ({increasePercent if self.type == "crypto" else ""}{" ↑" if increasePercent>0 else " ↓" if self.type == "crypto" else ""}) | {dict["date"]}', fontsize=13, weight='bold')
         else:
             plt.title(f'{self.type.capitalize()} Balance: {dict["total"]} {dict["currency"]} | {dict["date"]}', fontsize=13, weight='bold')
@@ -339,6 +349,7 @@ class calculateWalletValue:
         temp = json.dumps({
             'date': crypto['date'],
             'total_value': crypto['total'],
+            'total_invested': self.total_invested,
             'currency': crypto['currency'],
             'img_file': filename,
             'crypto': [['COIN, QTA, VALUE IN CURRENCY']]+crypto['symbol'],
@@ -376,8 +387,8 @@ class calculateWalletValue:
             for line in f:
                 record.append(json.loads(line))
         
-        for (i, record) in enumerate(record):
-            print(f"[{i}] {record['date']}", end='\n')
+        for (i, rec) in enumerate(record):
+            print(f"[{i}] {rec['date']}", end='\n')
         
         lib.printWarn('Type one number...')
         gotIndex = False
@@ -385,9 +396,11 @@ class calculateWalletValue:
         while not gotIndex:
             try:
                 index = int(input())
-                if index >= 0 and index < len(record):
+                if index >= 0 and index <= len(record):
                     gotIndex = True
                 else: lib.printFail('Insert an in range number...')
+            except KeyboardInterrupt:
+                exit()
             except:
                 lib.printFail('Insert a valid number...')
 
@@ -400,6 +413,9 @@ class calculateWalletValue:
         }
 
         newdict = self.handleDataPlt(newdict)
+        if 'total_invested' in record.keys():
+            newdict['total_invested'] = record['total_invested']
+        else: newdict['total_invested'] = 0
         self.genPlt(newdict)
 
     # main 
@@ -441,7 +457,7 @@ class walletBalanceReport:
 
     # get forex rate based on self.settings["currency"]
     def getForexRate(self, line: dict):
-        if line['currency'] == 'USD' and self.settings["currency"] == 'EUR':
+        if self.settings["currency"] == 'EUR' and line['currency'] == 'USD':
             # get forex rate using yahoo api
             return yahooGetPriceOf(f'{self.settings["currency"]}{line["currency"]}=X', '', True)
         elif line['currency'] == 'EUR' and self.settings["currency"] == 'USD':
