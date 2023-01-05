@@ -82,14 +82,14 @@ class calculateWalletValue:
 
             if not os.path.exists(basePath+'\\walletGeneralOverview.json'):
                 open(basePath+'\\walletGeneralOverview.json', 'w')
-                
+
             # set paths variable
             self.settings['grafico_path'] = basePath+'\\grafico'
             if self.type == 'total': # set json file based on type
                 self.settings['json_path'] = basePath+'\\walletGeneralOverview.json'
             else:
                 self.settings['json_path'] = basePath+'\\walletValue.json'
-        else: 
+        else:
             lib.printFail('Specify a correct path in settings.json')
             exit()
 
@@ -163,11 +163,8 @@ class calculateWalletValue:
 
             # add total_invested from csv to self.total_invested if crypto otherwise igore it
             if symbol == 'total_invested':
-                if self.type == 'crypto':
-                    self.total_invested = qta
-                    continue
-                else:
-                    continue
+                self.total_invested = qta
+                continue
             
             # if input.csv contain a symbol multiple time
             if symbol in list(data.keys()): 
@@ -337,46 +334,58 @@ class calculateWalletValue:
         if not self.load: 
             # when you specify --loadJson you already have json data in walletValue/walletGeneralOverview and image saved
             # so only if --loadJson isn't specified save img and json file
-            plt.savefig(f'{self.settings["grafico_path"]}\\{filename}') #save image
-            lib.printOk(f'Pie chart image successfully saved in {self.settings["grafico_path"]}\{filename}')
-            self.updateJson(rawcrypto, filename) # update walletValue.json
+            plt.savefig(f'{self.settings["grafico_path"]}\\{"C_" if self.type == "crypto" else "T_" if self.type == "total" else ""}{filename}') #save image
+            lib.printOk(f'Pie chart image successfully saved in {self.settings["grafico_path"]}\{"C_" if self.type == "crypto" else "T_" if self.type == "total" else ""}{filename}')
+            self.updateJson(rawcrypto) # update walletValue.json
 
         plt.show() 
 
-    # update data in self.settings['json_path']
-    def updateJson(self, crypto: dict, filename: str):
-        new_file = ''
-        temp = json.dumps({
-            'date': crypto['date'],
-            'total_value': crypto['total'],
-            'total_invested': self.total_invested,
-            'currency': crypto['currency'],
-            'img_file': filename,
-            'crypto': [['COIN, QTA, VALUE IN CURRENCY']]+crypto['symbol'],
-            }
-        )
+    # update data in walletValue.json and walletGeneralOverview.json
+    def updateJson(self, crypto: dict):
+        temp_type = 't'
+        for file in [self.settings['path']+'\\walletGeneralOverview.json', self.settings['path']+'\\walletValue.json']:
+            new_file = ''
+            if temp_type == 'c':
+                # to update correctly walletValue.json (temp_type: 'c')
+                # we do not have to include fiat currency
+                # we have to include only crypto and stablecoin
+                for item in crypto['symbol']:
+                    if item[0].lower() in self.supportedCurrency: # item[0] is the symbol of crypto eg. BTC
+                        crypto['symbol'].pop(crypto['symbol'].index(item))
 
-        # read dates from json file
-        # if today date is already in the json file, overwrite it
-        with open(self.settings['json_path'], 'r') as f:
-            for line in f:
-                try:
-                    date = json.loads(line)
-                except json.decoder.JSONDecodeError: # sometimes it throw error on line 2
-                    pass
-                # parse date and convert to dd/mm/yyyy
-                new_date = datetime.strptime(date['date'].split(' ')[0], '%d/%m/%Y')
-                file_date = datetime.strptime(crypto['date'].split(' ')[0], '%d/%m/%Y')
+            tt = '_' if self.total_invested <= 0 else self.total_invested
+            temp = json.dumps({
+                'date': crypto['date'],
+                'total_value': crypto['total'],
+                'total_invested': tt,
+                'currency': crypto['currency'],
+                'price_provider': f"{'coinMarkerCap' if self.provider == 'cmc' else 'coinGecko' if self.provider == 'cg' else ''}",
+                'crypto': [['COIN, QTA, VALUE IN CURRENCY']]+crypto['symbol'],
+                }
+            )
 
-                if new_date != file_date: # if file dates aren't equal to today's date
-                    new_file += line # add line to new file
-        
-        new_file += temp # add the latest record to new file
+            # read dates from json file
+            # if today date is already in the json file, overwrite it
+            with open(file, 'r') as f:
+                for line in f:
+                    try:
+                        date = json.loads(line)
+                    except json.decoder.JSONDecodeError: # sometimes it throw error on line 2
+                        pass
+                    # parse date and convert to dd/mm/yyyy
+                    new_date = datetime.strptime(date['date'].split(' ')[0], '%d/%m/%Y')
+                    file_date = datetime.strptime(crypto['date'].split(' ')[0], '%d/%m/%Y')
 
-        with open(self.settings['json_path'], 'w') as f:
-            f.write(f'{new_file}\n')
-        
-        lib.printOk(f'Data successfully saved in {self.settings["json_path"]}\n')
+                    if new_date != file_date: # if file dates aren't equal to today's date
+                        new_file += line # add line to new file
+            
+            new_file += temp # add the latest record to new file
+
+            with open(file, 'w') as f:
+                f.write(f'{new_file}\n')
+            
+            lib.printOk(f'Data successfully saved in {file}')
+            temp_type = 'c'
 
     # given a past date and json data from a json file, create grafic visualization with a pie chart
     def genPltFromJson(self, filename: str):
