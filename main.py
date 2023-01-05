@@ -670,7 +670,7 @@ class cryptoBalanceReport:
         ax1.set_ylabel('Amount', color='g')
         ax2.set_ylabel('Fiat Value', color='r')
         # add title
-        plt.title(f'Amount and fiat value of {self.ticker} in eur from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=12, weight='bold')
+        plt.title(f'Amount and fiat value of {self.ticker} in {self.settings["currency"]} from {self.data["date"][0].strftime("%d %b %Y")} to {self.data["date"][-1].strftime("%d %b %Y")}', fontsize=12, weight='bold')
         # changing the fontsize and rotation of x ticks
         plt.xticks(fontsize=6.5, rotation = 45)
         plt.show()
