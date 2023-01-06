@@ -340,25 +340,68 @@ class calculateWalletValue:
 
         plt.show() 
 
-    # update data in walletValue.json and walletGeneralOverview.json
     def updateJson(self, crypto: dict):
-        temp_type = 't'
+        new_file = ''
+        temp = json.dumps({
+            'date': crypto['date'],
+            'total_value': crypto['total'],
+            'total_invested': self.total_invested,
+            'currency': crypto['currency'],
+            'price_provider': f"{'coinMarkerCap' if self.provider == 'cmc' else 'coinGecko' if self.provider == 'cg' else ''}",
+            'crypto': [['COIN, QTA, VALUE IN CURRENCY']]+crypto['symbol'],
+            }
+        )
+
+        # read dates from json file
+        # if today date is already in the json file, overwrite it
+        with open(self.settings['json_path'], 'r') as f:
+            for line in f:
+                try:
+                    date = json.loads(line)
+                except json.decoder.JSONDecodeError: # sometimes it throw error on line 2
+                    pass
+                # parse date and convert to dd/mm/yyyy
+                new_date = datetime.strptime(date['date'].split(' ')[0], '%d/%m/%Y')
+                file_date = datetime.strptime(crypto['date'].split(' ')[0], '%d/%m/%Y')
+
+                if new_date != file_date: # if file dates aren't equal to today's date
+                    new_file += line # add line to new file
+        
+        new_file += temp # add the latest record to new file
+
+        with open(self.settings['json_path'], 'w') as f:
+            f.write(f'{new_file}\n')
+        
+        lib.printOk(f'Data successfully saved in {self.settings["json_path"]}\n')
+
+    # update data in walletValue.json and walletGeneralOverview.json
+    def OLDupdateJson(self, crypto: dict):
+        list_symbol_total = crypto['symbol']
+        list_symbol_crypto = crypto['symbol']
+
+        print(crypto['symbol'])
+
+        # remove fiat currency to dump only crypto and stablecoin in walletValue.json
+        for item in list_symbol_crypto:
+            if item[0].lower() in self.supportedCurrency: # item[0] is the symbol of crypto eg. BTC, EUR, ATOM
+                list_symbol_crypto.pop(list_symbol_crypto.index(item))
+
         for file in [self.settings['path']+'\\walletGeneralOverview.json', self.settings['path']+'\\walletValue.json']:
             new_file = ''
-            if temp_type == 'c':
-                # to update correctly walletValue.json (temp_type: 'c')
-                # we do not have to include fiat currency
-                # we have to include only crypto and stablecoin
-                for item in crypto['symbol']:
-                    if item[0].lower() in self.supportedCurrency: # item[0] is the symbol of crypto eg. BTC
-                        crypto['symbol'].pop(crypto['symbol'].index(item))
 
             tt = '_' if self.total_invested <= 0 else self.total_invested
+            if file.split('\\')[-1] == 'walletGeneralOverview.json': 
+                currency = list_symbol_total
+                print('diocane')
+            if file.split('\\')[-1] == 'walletValue.json': 
+                currency = list_symbol_crypto
+                print('porcodio')
+
             temp = json.dumps({
                 'date': crypto['date'],
                 'total_value': crypto['total'],
                 'total_invested': tt,
-                'currency': crypto['currency'],
+                'currency': currency,
                 'price_provider': f"{'coinMarkerCap' if self.provider == 'cmc' else 'coinGecko' if self.provider == 'cg' else ''}",
                 'crypto': [['COIN, QTA, VALUE IN CURRENCY']]+crypto['symbol'],
                 }
@@ -385,7 +428,6 @@ class calculateWalletValue:
                 f.write(f'{new_file}\n')
             
             lib.printOk(f'Data successfully saved in {file}')
-            temp_type = 'c'
 
     # given a past date and json data from a json file, create grafic visualization with a pie chart
     def genPltFromJson(self, filename: str):
