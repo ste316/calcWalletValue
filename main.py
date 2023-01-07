@@ -379,8 +379,6 @@ class calculateWalletValue:
         list_symbol_total = crypto['symbol']
         list_symbol_crypto = crypto['symbol']
 
-        print(crypto['symbol'])
-
         # remove fiat currency to dump only crypto and stablecoin in walletValue.json
         for item in list_symbol_crypto:
             if item[0].lower() in self.supportedCurrency: # item[0] is the symbol of crypto eg. BTC, EUR, ATOM
@@ -392,10 +390,8 @@ class calculateWalletValue:
             tt = '_' if self.total_invested <= 0 else self.total_invested
             if file.split('\\')[-1] == 'walletGeneralOverview.json': 
                 currency = list_symbol_total
-                print('diocane')
             if file.split('\\')[-1] == 'walletValue.json': 
                 currency = list_symbol_crypto
-                print('porcodio')
 
             temp = json.dumps({
                 'date': crypto['date'],
