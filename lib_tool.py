@@ -1,7 +1,9 @@
 from json import load
 from datetime import datetime, timedelta
+from os import environ
 
 class lib:
+    # works only on unixlike shell
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
@@ -10,7 +12,10 @@ class lib:
 
     @staticmethod
     def logConsole(text: str, color: str):
-        print(f'{color}{text} {lib.ENDC}')
+        if 'SHELL' not in environ.keys():
+            print(text)
+        else:
+            print(f'{color}{text} {lib.ENDC}')
 
     @staticmethod
     def printOk(text: str):

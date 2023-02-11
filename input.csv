@@ -1,8 +1,9 @@
-symbol,qta,address
-btc,0.2,
-eth,3.1,
-juno,52,
-dot,8,
-usdt,500,
-eur,230,
-total_invested,13000,
+symbol,qta,label
+usdc,79.20,cex-1
+usdc,31,dex-1
+usdt,94,
+eth,0.3457373,
+atom,14.21744,
+link,5,
+usd,240,
+total_invested,1000,
