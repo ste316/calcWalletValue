@@ -4,7 +4,7 @@
       * run: `pip install -r requirements.txt`
     * Insert all assets in input.csv
     * Fill settings.json with your preferences
-        * currency supported: "EUR" and "USD", needs to be uppercase 
+        * fiat currency supported: "EUR" and "USD", needs to be uppercase 
         * provider can be "cg" for CoinGecko or "cmc" for CoinMarketCap
         * Note: the first time you run the program make sure to fill fetchSymb with true
         * You can choose between CoinGecko and CoinMarketCap api
@@ -18,13 +18,13 @@
     There are 2 main group of command, to produce data and to analyse data
 
     * To produce data:
-        * Calculate your wallet value, show crypto portfolio, without fiat
+        * Calculate your wallet value, show crypto portfolio, without fiat currency
             * `--calc --crypto`
             * you may want to obscure total value showed in the graphic, add `--privacy`
             * you may want to see your portfolio in a past date(needs to be calculated in that date), add `--load`
         ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto.png)
 
-        * Calculate your wallet value, show crypto vs fiat value
+        * Calculate your wallet value, show crypto vs fiat currency value
             * `--calc --total`
             * you may want to obscure total value showed in the graphic, add `--privacy`
             * you may want to see your portfolio in a past date(needs to be calculated in that date), add `--load`
