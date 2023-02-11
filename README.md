@@ -13,7 +13,6 @@
             * [FASTER] CoinMarketCap it's free too and you need to [sign in](https://pro.coinmarketcap.com/login/) and get an api key
 
             CoinGecko is slower but you don't have to create any account or fill your information anywhere, yet more privacy
-            CoinMarketCap is lightning faster but you have less privacy.
 
 2. Usage:
     There are 2 main group of command, to produce data and to analyse data
