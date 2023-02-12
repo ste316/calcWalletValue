@@ -1,3 +1,6 @@
 *.json
+*.png
 *.csv
+__pycache__/
 img/
+json/
