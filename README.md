@@ -33,13 +33,13 @@
             * `python main.py --calc --crypto`
             * you may want to obscure total value showed in the graphic, run `python main.py --calc --crypto --privacy` 
             * you may want to see your portfolio in a past date(must have been calculated on that date), run `python main.py --calc --crypto --load`
-        ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto.png)
+        * ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto.png)
 
         * #### instantly see your wallet splitted in CRYPTO and FIAT:
             * `--calc --total`
             * you may want to obscure total value showed in the graphic, run `python main.py --calc --crypto --privacy` 
             * you may want to see your portfolio in a past date(must have been calculated on that date), run `python main.py --calc --crypto --load`
-        ![total](https://github.com/ste316/calcWalletValue/blob/main/img/total.png)
+        * ![total](https://github.com/ste316/calcWalletValue/blob/main/img/total.png)
 
     * ### You can analyse your portfolio over time, using these commands:
         * <span style="color:red">NOTE: to run all this commands you need at least 2 records in walletValue.json</span>
