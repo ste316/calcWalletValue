@@ -10,6 +10,8 @@
         * currency supported: "EUR" and "USD", needs to be uppercase 
             * other currencies may be supported, have not been tested
         * <span style="color:red">NOTE: the first time you run the program make sure to fill fetchSymb with true</span>
+        * <i>path</i> field will be the parent folder where the data will be saved
+
         * provider can be "cg" for CoinGecko or "cmc" for CoinMarketCap
         * You can choose between CoinGecko and CoinMarketCap api
             * CoinGecko api is free and you do NOT need any api key, see [plan](https://www.coingecko.com/en/api/pricing) and
@@ -19,7 +21,7 @@
             #### CoinMarketCap is lightning faster and easy to use, but you have less privacy.
             #### CoinGecko is slower and a bit more complicated to use, but you don't have to create any account or fill your information anywhere, yet more privacy.
             #### Both solutions are supported, make your choice.
-
+            in case you choose CoinMarketCap, make sure to fill the api key in <i>CMC_key</i> field
 2. ## Usage:
     * ### Preliminary step:
         * `cd <folderOfProject>`
