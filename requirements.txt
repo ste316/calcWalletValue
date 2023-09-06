@@ -4,6 +4,5 @@ matplotlib
 seaborn
 numpy
 argparse
-pycoingecko
 requests
 yfinance
