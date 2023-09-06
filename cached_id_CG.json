@@ -1,0 +1,17 @@
+{
+    "fixed": [
+        "crypto-com-chain",
+        "the-sandbox",
+        "usd-coin",
+        "thorchain",
+        "avalanche-2",
+        "cosmos",
+        "flow",
+        "ethereum",
+        "energy-web-token",
+        "solana",
+        "archway",
+        "tether"
+    ],
+    "used": {}
+}
