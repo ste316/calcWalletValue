@@ -37,7 +37,7 @@
         * ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto.png)
 
         * #### instantly see your wallet splitted in CRYPTO and FIAT:
-            * `--calc --total`
+            * `python main.py --calc --total`
             * 🟨🟨🟨NOTE: stablecoins are counted as FIAT🟨🟨🟨
             * you may want to obscure total value showed in the graphic, run `python main.py --calc --crypto --privacy` 
             * you may want to see your portfolio in a past date(must have been calculated on that date), run `python main.py --calc --crypto --load`
