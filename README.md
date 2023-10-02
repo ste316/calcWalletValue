@@ -17,10 +17,12 @@
             [limits](https://www.coingecko.com/en/api/documentation)
             * CoinMarketCap it's free too, but you need to [sign in](https://pro.coinmarketcap.com/login/) and get an api key
 
-            #### CoinMarketCap is lightning faster and easy to use, but you have less privacy.
+            #### CoinMarketCap is lightning faster and easy to use, but you have less privacy and not all coins are listed.
             #### CoinGecko is slower and a bit more complicated to use, but you don't have to create any account or fill your information anywhere, yet more privacy.
             #### Both solutions are supported, make your choice.
             in case you choose CoinMarketCap, make sure to fill the api key in <i>CMC_key</i> field
+    * After the first start-up all necessary files will be downloaded or writed
+    
 2. ## Usage:
     * ### Preliminary step:
         * `cd <folderOfProject>`
