@@ -1,5 +1,8 @@
 # Calculate Wallet Value is a program to instantly see how your cryptocurrency portfolio is performing.
 
+## Automatic portfolio Rebalancer is currently in beta phase and only support Kucoin exchange APIs.
+## If you want to try it switch to the [Development Repo](https://github.com/ste316/DEV_calculateWalletValue)
+
 1. ## Prerequisites:
     * [Download a python interpreter](https://www.python.org/downloads/), suggested python version >= 3.9
     * Download all dependencies
@@ -9,20 +12,21 @@
     * Fill settings.json with your preferences
         * currency supported: "EUR" and "USD", needs to be uppercase 
             * other currencies may be supported, have not been tested
+        * 🟨🟨🟨NOTE: the first time you run the program make sure to fill fetchSymb with true 🟨🟨🟨
         * <i>path</i> field will be the parent folder where the data will be saved
 
         * provider can be "cg" for CoinGecko or "cmc" for CoinMarketCap
         * You can choose between CoinGecko and CoinMarketCap api
             * CoinGecko api is free and you do NOT need any api key, see [plan](https://www.coingecko.com/en/api/pricing) and
-            [limits](https://www.coingecko.com/en/api/documentation)
+            [limits](https://www.coingecko.com/en/api/documentation), *Data provided by CoinGecko*
             * CoinMarketCap it's free too, but you need to [sign in](https://pro.coinmarketcap.com/login/) and get an api key
 
-            #### CoinMarketCap is lightning faster and easy to use, but you have less privacy and not all coins are listed.
+            #### CoinMarketCap is lightning faster and easy to use, but you have less privacy.
             #### CoinGecko is slower and a bit more complicated to use, but you don't have to create any account or fill your information anywhere, yet more privacy.
             #### Both solutions are supported, make your choice.
             in case you choose CoinMarketCap, make sure to fill the api key in <i>CMC_key</i> field
     * After the first start-up all necessary files will be downloaded or writed
-    
+
 2. ## Usage:
     * ### Preliminary step:
         * `cd <folderOfProject>`
@@ -37,7 +41,7 @@
         * ![crypto](https://github.com/ste316/calcWalletValue/blob/main/img/crypto.png)
 
         * #### instantly see your wallet splitted in CRYPTO and FIAT:
-            * `python main.py --calc --total`
+            * `--calc --total`
             * 🟨🟨🟨NOTE: stablecoins are counted as FIAT🟨🟨🟨
             * you may want to obscure total value showed in the graphic, run `python main.py --calc --crypto --privacy` 
             * you may want to see your portfolio in a past date(must have been calculated on that date), run `python main.py --calc --crypto --load`
